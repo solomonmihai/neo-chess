@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Box } from "@chakra-ui/react";
-import Game from "./pages/Game";
+import Game from "./components/Game";
 
 export default function App() {
   return (
