@@ -5,10 +5,7 @@ export default function Square({ isBlack, moveOnMe, highlight, children }) {
     moveOnMe();
   }
 
-  let color = isBlack ? "blue.700" : "gray.100";
-  if (highlight) {
-    color = "blue.300";
-  }
+  const color = highlight || (isBlack ? "blue.700" : "gray.100");
 
   return (
     <Box

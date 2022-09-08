@@ -1,5 +1,5 @@
 import { Box, Image } from "@chakra-ui/react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 import images from "./images";
 
