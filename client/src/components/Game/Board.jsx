@@ -8,6 +8,8 @@ import Piece from "./Piece";
 
 const socket = io("localhost:3000");
 
+// TODO: draw arrows, highlight squares feature
+
 function getSquarePos(i1, i2) {
   const file = String.fromCharCode("a".charCodeAt(0) + i2);
   return `${file}${8 - i1}`;

@@ -9,11 +9,11 @@ class Player {
   }
 }
 
-function game(id) {
+export function game(id) {
   return games[id];
 }
 
-function addPlayer({ gameID, name, id }) {
+export function addPlayer({ gameID, name, id }) {
   if (!games[gameID]) {
     const color = Math.random() < 0.5 ? "w" : "b";
     const player = new Player(name, color, id, gameID);
@@ -44,7 +44,7 @@ function addPlayer({ gameID, name, id }) {
   };
 }
 
-function removePlayer(id) {
+export function removePlayer(id) {
   for (const game in games) {
     const players = games[game];
     const index = players.findIndex((p) => p.id == id);
@@ -54,9 +54,3 @@ function removePlayer(id) {
     }
   }
 }
-
-module.exports = {
-  addPlayer,
-  game,
-  removePlayer,
-};
