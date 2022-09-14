@@ -8,6 +8,28 @@ import verifyToken from "../middleware/auth.js";
 
 const AuthRouter = Router();
 
+function getJWT(user) {
+  const payload = {
+    id: user._id,
+    username: user.username,
+  };
+
+  return new Promise((resolve, reject) => {
+    jwt.sign(
+      payload,
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" },
+      function (err, token) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(`Bearer ${token}`);
+        }
+      }
+    );
+  });
+}
+
 AuthRouter.post(
   "/register",
   body("email").isEmail().normalizeEmail(),
@@ -18,16 +40,21 @@ AuthRouter.post(
 
     if (!errors.isEmpty()) {
       if (errors.errors[0].param == "email") {
-        return res.status(400).send("invalid email");
+        return res.status(400).send({ email: "invalid email" });
       }
       if (errors.errors[0].param == "username") {
-        return res.status(400).send("invalid username");
+        return res.status(400).send({ username: "invalid username" });
       }
       if (errors.errors[0].param == "password") {
-        return res
-          .status(400)
-          .send("password must be between 6 and 16 chars and needs 1 number");
+        return res.status(400).send({
+          password:
+            "password must be between 6 and 16 chars and needs 1 number",
+        });
       }
+    }
+
+    if (req.body.password != req.body.confirmPassword) {
+      return res.status(400).send({ confirmPassword: "passwords don't match" });
     }
 
     const { email, username, password } = req.body;
@@ -36,17 +63,20 @@ AuthRouter.post(
     const usernameTaken = await User.findOne({ username });
 
     if (emailTaken) {
-      return res.status(400).send("email taken");
+      return res.status(400).send({ email: "email taken" });
     }
     if (usernameTaken) {
-      return res.status(400).send("username taken");
+      return res.status(400).send({ username: "username taken" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({ email, username, password: hashedPassword });
     await newUser.save();
 
-    return res.send("user registered successfully");
+    try {
+      const token = await getJWT(newUser);
+      return res.send({ token, user: newUser });
+    } catch (err) {}
   }
 );
 
@@ -55,36 +85,26 @@ AuthRouter.post("/login", async (req, res) => {
 
   const user = await User.findOne({ username });
   if (!user) {
-    return res.status(400).send("username not found");
+    return res.status(400).send({ username: "username not found" });
   }
 
-  bcrypt.compare(password, user.password).then((match) => {
+  bcrypt.compare(password, user.password).then(async (match) => {
     if (!match) {
-      return res.status(400).send("incorrect password");
+      return res.status(400).send({ password: "incorrect password" });
     }
 
-    const payload = {
-      id: user._id,
-      username,
-    };
-
-    jwt.sign(
-      payload,
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" },
-      (err, token) => {
-        if (err) {
-          return res.status(400).send(`erorr generating jwt ${err}`);
-        }
-
-        return res.send(`Bearer ${token}`);
-      }
-    );
+    getJWT(user)
+      .then((token) => {
+        return res.send({ token, user });
+      })
+      .catch((err) => {
+        return res.status(400).send(`error genertaing token: ${err}`);
+      });
   });
 });
 
 AuthRouter.get("/", verifyToken, async (req, res) => {
-  return res.send('authenticated')
+  return res.send({ user: req.user });
 });
 
 export default AuthRouter;

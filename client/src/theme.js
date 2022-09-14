@@ -5,8 +5,16 @@ const config = {
   useSystemColorMode: false,
 };
 
+const components = {
+  Input: {
+    defaultProps: {
+      focusBorderColor: "purple.200"
+    }
+  }
+}
+
 const theme = extendTheme(
-  { config },
+  { config, components },
   withDefaultColorScheme({ colorScheme: "purple" })
 );
 

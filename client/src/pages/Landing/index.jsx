@@ -1,7 +1,20 @@
+import { useEffect } from "react";
 import { Text, Box, Button, Heading } from "@chakra-ui/react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+
+import AuthStore from "../../stores/AuthStore";
 
 export default function Landing() {
+  const navigate = useNavigate();
+
+  const user = AuthStore.useState((s) => s.user);
+
+  useEffect(() => {
+    if (user) {
+      navigate("/home");
+    }
+  }, [user]);
+
   return (
     <Box mt="10%">
       <Heading textAlign="center">welcome to neo-chess</Heading>
