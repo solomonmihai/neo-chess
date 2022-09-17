@@ -1,7 +1,9 @@
 import axios from "axios";
-import { useEffect } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
+
 import PrivateRoute from "./components/PrivateRoute";
+import Nav from "./components/Nav";
 import Game from "./pages/Game";
 import Home from "./pages/Home";
 import Landing from "./pages/Landing";
@@ -10,14 +12,15 @@ import Register from "./pages/Register";
 
 import AuthStore from "./stores/AuthStore";
 import { checkToken } from "./util/auth";
+import { Box, Text } from "@chakra-ui/react";
 
 export default function App() {
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     AuthStore.subscribe(
-      (s) => s,
-      ({ token }) => {
-        console.log("app subscribe");
+      (s) => s.token,
+      (token) => {
         if (!token) {
           localStorage.removeItem("token");
           delete axios.defaults.headers.common["x-access-token"];
@@ -30,8 +33,21 @@ export default function App() {
       }
     );
 
-    checkToken();
+    checkToken().then(() => {
+      setLoading(false);
+    });
   }, []);
+
+  // TODO: refactor this
+  if (loading) {
+    return (
+      <Box>
+        <Text fontWeight="bold" textAlign="center">
+          loading ...
+        </Text>
+      </Box>
+    );
+  }
 
   return (
     <BrowserRouter>
@@ -39,15 +55,26 @@ export default function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+
         <Route
-          path="/home"
+          path="/"
           element={
-            <PrivateRoute>
-              <Home />
-            </PrivateRoute>
+            <>
+              <Nav />
+              <Outlet />
+            </>
           }
-        />
-        <Route path="/game" element={<Game />} />
+        >
+          <Route
+            path="/home"
+            element={
+              <PrivateRoute>
+                <Home />
+              </PrivateRoute>
+            }
+          />
+          <Route path="/game" element={<Game />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

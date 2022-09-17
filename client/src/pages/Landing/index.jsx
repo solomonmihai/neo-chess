@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Text, Box, Button, Heading } from "@chakra-ui/react";
+import { Text, Box, Button, Heading, Flex } from "@chakra-ui/react";
 import { Link, useNavigate } from "react-router-dom";
 
 import AuthStore from "../../stores/AuthStore";
@@ -18,13 +18,7 @@ export default function Landing() {
   return (
     <Box mt="10%">
       <Heading textAlign="center">welcome to neo-chess</Heading>
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        mt="6"
-        mb="2"
-      >
+      <Flex justifyContent="center" alignItems="center" mt="6" mb="2">
         <Link to="register">
           <Button mx="2" w="200px">
             create an account
@@ -33,7 +27,7 @@ export default function Landing() {
         <Button mx="2" w="200px" variant="outline">
           play as guest
         </Button>
-      </Box>
+      </Flex>
       <Box w="full">
         <Text textAlign="center" color="gray.400">
           already have an account?{" "}

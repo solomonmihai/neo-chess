@@ -43,7 +43,7 @@ export async function checkToken() {
   }
 }
 
-export function logOut() {
+export function logoutUser() {
   AuthStore.update((s) => {
     s.token = null;
     s.user = null;

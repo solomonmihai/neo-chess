@@ -61,8 +61,6 @@ export default function Register() {
     },
   ];
 
-  // TODO: register on enter
-
   return (
     <Box w="full" display="flex" justifyContent="center" alignItems="center">
       <FormControl maxW="400px" mt="70px">
@@ -76,6 +74,7 @@ export default function Register() {
           errors={errors}
           setData={setData}
           setErrors={setErrors}
+          onSubmit={register}
         />
 
         <Button w="full" mt="4" onClick={register}>

@@ -3,6 +3,7 @@ lockfileVersion: 5.4
 specifiers:
   bcrypt: ^5.0.1
   body-parser: ^1.20.0
+  chess.js: 1.0.0-alpha.0
   cors: ^2.8.5
   dotenv: ^16.0.2
   express: ^4.18.1
@@ -10,10 +11,12 @@ specifiers:
   jsonwebtoken: ^8.5.1
   mongoose: ^6.6.0
   socket.io: ^4.5.2
+  uuid: ^9.0.0
 
 dependencies:
   bcrypt: 5.0.1
   body-parser: 1.20.0
+  chess.js: 1.0.0-alpha.0
   cors: 2.8.5
   dotenv: 16.0.2
   express: 4.18.1
@@ -21,6 +24,7 @@ dependencies:
   jsonwebtoken: 8.5.1
   mongoose: 6.6.0
   socket.io: 4.5.2
+  uuid: 9.0.0
 
 packages:
 
@@ -191,6 +195,10 @@ packages:
     dependencies:
       function-bind: 1.1.1
       get-intrinsic: 1.1.2
+    dev: false
+
+  /chess.js/1.0.0-alpha.0:
+    resolution: {integrity: sha512-nwEDlNEOZR/FaKW1DZLYtjgJrtAlxBW/6Fp4Hk8QXqpCCLrXweOU6/vKfJ/jNHT2gPqasxi0/ZPslcWAAdzozg==}
     dev: false
 
   /chownr/2.0.0:
@@ -1091,6 +1099,11 @@ packages:
   /utils-merge/1.0.1:
     resolution: {integrity: sha1-n5VxD1CiZ5R7LMwSR0HBAoQn5xM=}
     engines: {node: '>= 0.4.0'}
+    dev: false
+
+  /uuid/9.0.0:
+    resolution: {integrity: sha512-MXcSTerfPa4uqyzStbRoTgt5XIe3x5+42+q1sDuy3R5MDk66URdLMOZe5aPX/SQd+kuYAh0FdP/pO28IkQyTeg==}
+    hasBin: true
     dev: false
 
   /validator/13.7.0:

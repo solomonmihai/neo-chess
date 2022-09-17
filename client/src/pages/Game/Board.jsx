@@ -1,26 +1,44 @@
 import { useEffect, useRef, useState } from "react";
-import { Chess } from "chess.js";
-import { Box } from "@chakra-ui/react";
-import io from "socket.io-client";
+import { Box, color } from "@chakra-ui/react";
 
 import Square from "./Square";
 import Piece from "./Piece";
 
-const socket = io("localhost:3000");
-
 // TODO: draw arrows, highlight squares feature
 
-function getSquarePos(i1, i2) {
-  const file = String.fromCharCode("a".charCodeAt(0) + i2);
-  return `${file}${8 - i1}`;
+function getSquarePos(i1, i2, isBlack) {
+  const file = String.fromCharCode("a".charCodeAt(0) + (isBlack ? 7 - i2 : i2));
+  const rank = isBlack ? 7 - i1 : i1;
+  return `${file}${8 - rank}`;
 }
 
-export default function Board() {
-  const chess = useRef(new Chess());
-  const [board, setBoard] = useState(chess.current.board());
-  const [lastMove, setLastMove] = useState();
+function emptyBoard() {
+  const board = [];
 
-  const playingAsWhite = true;
+  for (let i = 0; i < 8; i++) {
+    const row = [];
+    for (let j = 0; j < 8; j++) {
+      row.push(null);
+    }
+    board.push(row);
+  }
+
+  return board;
+}
+
+const EMPTY_BOARD = emptyBoard();
+
+export default function Board({
+  board = EMPTY_BOARD,
+  isBlack = false,
+  sendMove,
+}) {
+  if (isBlack) {
+    board = board.reverse();
+    board.map((row) => row.reverse());
+  }
+
+  const [lastMove, setLastMove] = useState();
 
   const moveStart = useRef();
   function setMoveStart(pos) {
@@ -30,53 +48,22 @@ export default function Board() {
   function makeMove(pos) {
     const from = moveStart.current;
     const to = pos;
-    const move = chess.current.move({
-      from,
-      to,
-    });
-    // TODO: check promotion
-    if (move) {
-      setLastMove(move);
-    }
-    setBoard(chess.current.board());
-    socket.emit("move", { gameId: 20, from, to });
+    const move = { from, to };
+    // setLastMove(move);
+    sendMove(move);
   }
 
-  useEffect(() => {
-    socket.emit("join", { name: "Mihai", gameId: 20 }, ({ error, color }) => {
-      console.log({ color });
-    });
+  // TODO: make board resizable
+  // TODO: show notations
+  // TODO: fix last move highlight
 
-    socket.on("welcome", ({ message, opponent }) => {
-      console.log({ message, opponent });
-    });
-
-    socket.on("opponentJoin", ({ message, opponent }) => {
-      console.log({ message, opponent });
-    });
-
-    socket.on("opponentMove", ({ from, to }) => {
-      const move = chess.current.move({
-        from,
-        to,
-      });
-      if (move) {
-        setLastMove(move);
-      }
-      setBoard(chess.current.board());
-    });
-
-    socket.on("message", ({ message }) => {
-      console.log({ message });
-    });
-  }, []);
 
   return (
     <Box userSelect="none">
       {board.map((row, i1) => (
         <Box key={i1} display="flex">
           {row.map((cell, i2) => {
-            const pos = getSquarePos(i1, i2);
+            const pos = getSquarePos(i1, i2, isBlack);
 
             // choose highlight color
             let highlight = null;
@@ -91,7 +78,7 @@ export default function Board() {
             return (
               <Square
                 key={i2}
-                isBlack={(i1 + i2) % 2 == !playingAsWhite}
+                isBlack={(i1 + i2) % 2 == isBlack}
                 highlight={highlight}
                 moveOnMe={() => {
                   makeMove(pos);

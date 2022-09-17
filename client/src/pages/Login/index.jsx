@@ -1,11 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Box, Button, FormControl, Text } from "@chakra-ui/react";
 import { Link, useNavigate } from "react-router-dom";
 
 import InputList from "../../components/InputList";
 import { loginUser } from "../../util/auth";
 import AuthStore from "../../stores/AuthStore";
-import { useEffect } from "react";
 
 export default function Login() {
   const [data, setData] = useState({
@@ -57,6 +56,7 @@ export default function Login() {
           errors={errors}
           setData={setData}
           setErrors={setErrors}
+          onSubmit={login}
         />
 
         <Button w="full" mt="4" onClick={login}>

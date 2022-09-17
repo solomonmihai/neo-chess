@@ -7,7 +7,7 @@ import {
 } from "@chakra-ui/react";
 import { AiOutlineEyeInvisible, AiOutlineEye } from "react-icons/ai";
 
-export default function PasswordInput({ value, onChange }) {
+export default function PasswordInput({ value, onChange, ...props }) {
   const [show, setShow] = useState(false);
 
   return (
@@ -17,6 +17,7 @@ export default function PasswordInput({ value, onChange }) {
         type={show ? "text" : "password"}
         value={value}
         onChange={onChange}
+        {...props}
       />
       <InputRightElement>
         <IconButton
