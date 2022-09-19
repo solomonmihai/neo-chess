@@ -8,6 +8,9 @@ import bodyParser from "body-parser";
 import cors from "cors";
 
 import AuthRouter from "./routers/auth.js";
+import UserRouter from "./routers/user.js";
+import GameRouter from "./routers/game.js";
+
 import controller from "./sockets/controller.js";
 
 const app = express();
@@ -22,6 +25,8 @@ app.use(bodyParser.json(), urlEncodedParser);
 app.use(cors());
 
 app.use("/auth", AuthRouter);
+app.use("/game", GameRouter);
+app.use("/user", UserRouter);
 
 const dbURI = process.env.DB_URL;
 
@@ -32,9 +37,6 @@ connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
   .catch((err) => {
     console.log("error connecting to db", err);
   });
-
-// TODO: check how to clear game id
-// TODO: move game logic to server side
 
 server.listen(3000, () => {
   console.log("listening ...");

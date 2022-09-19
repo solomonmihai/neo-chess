@@ -22,24 +22,48 @@ export default class Game {
     }
 
     this.players.push(player);
+    player.socket.join(this.id);
+    this.start();
+
     return true;
   }
 
-  removePlayer(socketId) {
-    // TODO
+  getOtherPlayer(player) {
+    return this.players.find((p) => p.userId != player.userId);
+  }
+
+  disconnectPlayer(socketId) {
+    for (const player of this.players) {
+      if (player.socket.id == socketId) {
+        player.socket.to(this.id).emit("opponent-disconnected");
+        player.disconnected = true;
+      }
+    }
+  }
+
+  reconnectPlayer({ userId, socket }) {
+    const player = this.players.find((p) => p.userId == userId);
+
+    player.disconnected = false;
+    player.socket = socket;
+
+    player.socket.join(this.id);
+    player.socket.emit("player-data", {
+      color: player.color,
+      opponentId: this.getOtherPlayer(player).userId,
+    });
+    player.socket.emit("board", { board: this.chessInstance.board() });
   }
 
   start() {
-    if (Math.random() < 0.5) {
-      this.players[0].color = "w";
-      this.players[1].color = "b";
-    } else {
-      this.players[0].color = "w";
-      this.players[1].color = "b";
-    }
+    const c1 = Math.random() < 0.5 ? "w" : "b";
+    const c2 = c1 == "w" ? "b" : "w";
+
+    this.players[0].color = c1;
+    this.players[1].color = c2;
 
     this.players.forEach((p) => {
-      p.socket.emit("set-color", { color: p.color });
+      p.socket.emit("player-data", { color: p.color, opponentId: this.getOtherPlayer(p).userId });
     });
 
     this.sendBoard();
@@ -49,12 +73,12 @@ export default class Game {
     this.io.to(this.id).emit("board", { board: this.chessInstance.board() });
   }
 
-  getPlayerColor(id) {
-    return this.players.find((p) => p.userId == id).color;
+  getPlayer(id) {
+    return this.players.find((p) => p.userId == id);
   }
 
   makeMove({ move, userId }) {
-    if (this.getPlayerColor(userId) != this.chessInstance.turn()) {
+    if (this.getPlayer(userId).color != this.chessInstance.turn()) {
       return;
     }
     this.chessInstance.move(move);

@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from "react";
-import { Box, color } from "@chakra-ui/react";
+import { useRef, useState } from "react";
+import { Box } from "@chakra-ui/react";
 
 import Square from "./Square";
 import Piece from "./Piece";
+import { useEffect } from "react";
 
 // TODO: draw arrows, highlight squares feature
 
@@ -28,17 +29,14 @@ function emptyBoard() {
 
 const EMPTY_BOARD = emptyBoard();
 
-export default function Board({
-  board = EMPTY_BOARD,
-  isBlack = false,
-  sendMove,
-}) {
+export default function Board({ board = EMPTY_BOARD, isBlack = false, sendMove }) {
+  const [lastMove, setLastMove] = useState();
+
+  // TODO fix board flip
   if (isBlack) {
     board = board.reverse();
     board.map((row) => row.reverse());
   }
-
-  const [lastMove, setLastMove] = useState();
 
   const moveStart = useRef();
   function setMoveStart(pos) {
@@ -56,7 +54,6 @@ export default function Board({
   // TODO: make board resizable
   // TODO: show notations
   // TODO: fix last move highlight
-
 
   return (
     <Box userSelect="none">
@@ -84,13 +81,7 @@ export default function Board({
                   makeMove(pos);
                 }}
               >
-                {cell && (
-                  <Piece
-                    type={cell.type}
-                    color={cell.color}
-                    setAsMoveStart={() => setMoveStart(pos)}
-                  />
-                )}
+                {cell && <Piece type={cell.type} color={cell.color} setAsMoveStart={() => setMoveStart(pos)} />}
               </Square>
             );
           })}
