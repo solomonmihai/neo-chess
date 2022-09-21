@@ -29,14 +29,8 @@ function emptyBoard() {
 
 const EMPTY_BOARD = emptyBoard();
 
-export default function Board({ board = EMPTY_BOARD, isBlack = false, sendMove }) {
+export default function Board({ board = EMPTY_BOARD, isBlack, sendMove }) {
   const [lastMove, setLastMove] = useState();
-
-  // TODO fix board flip
-  if (isBlack) {
-    board = board.reverse();
-    board.map((row) => row.reverse());
-  }
 
   const moveStart = useRef();
   function setMoveStart(pos) {
@@ -55,9 +49,16 @@ export default function Board({ board = EMPTY_BOARD, isBlack = false, sendMove }
   // TODO: show notations
   // TODO: fix last move highlight
 
+  let boardCopy = board.map((row) => row.slice(0));
+
+  if (isBlack) {
+    boardCopy = boardCopy.reverse();
+    boardCopy.map((row) => row.reverse());
+  }
+
   return (
     <Box userSelect="none">
-      {board.map((row, i1) => (
+      {boardCopy.map((row, i1) => (
         <Box key={i1} display="flex">
           {row.map((cell, i2) => {
             const pos = getSquarePos(i1, i2, isBlack);

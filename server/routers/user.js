@@ -15,7 +15,11 @@ UserRouter.get("/:id", async (req, res) => {
     return res.status(400).send({ message: "user not found" });
   }
 
-  return res.send({ user });
+  return res.send({
+    user: {
+      username: user.username,
+    },
+  });
 });
 
 export default UserRouter;

@@ -1,31 +1,29 @@
 import { Server } from "socket.io";
-import Game from "./gameManager.js";
 import Player from "./player.js";
 
 import { games, userIsInGame, socketIsInGame } from "../game/games.js";
 
-function handlePlayerJoin({ io, socket, userId, gameId }) {
+function handlePlayerJoin({ socket, callback, userId, gameId }) {
   const { game } = userIsInGame(userId);
   if (game) {
-    game.reconnectPlayer({ userId, socket });
-    return true;
+    if (game.id == gameId) {
+      game.reconnectPlayer({ userId, socket });
+    } else {
+      callback({ message: "player is in another game" });
+    }
+    return;
   }
 
   if (!games[gameId]) {
-    const firstPlayer = new Player({ userId, socket });
-    games[gameId] = new Game({ io, firstPlayer });
-    socket.join(gameId);
-    return true;
+    callback({ message: "game non existent" });
+    return;
   }
 
-  const res = games[gameId].addPlayer(
-    new Player({
-      userId,
-      socket,
-    })
-  );
+  const player = new Player({ userId, socket });
 
-  return res;
+  if (!games[gameId].addPlayer(player)) {
+    callback({ message: "cannot join this game" });
+  }
 }
 
 export default function controller(server) {
@@ -33,9 +31,7 @@ export default function controller(server) {
 
   io.on("connection", (socket) => {
     socket.on("join", ({ userId, gameId }, callback) => {
-      if (!handlePlayerJoin({ io, socket, userId, gameId })) {
-        callback({ message: "game full" });
-      }
+      handlePlayerJoin({ socket, callback, userId, gameId });
     });
 
     socket.on("move", ({ move, gameId, userId }) => {

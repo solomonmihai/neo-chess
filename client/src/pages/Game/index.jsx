@@ -1,5 +1,6 @@
-import { Flex, Box, Text } from "@chakra-ui/react";
+import { Flex } from "@chakra-ui/react";
 import { useRef, useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import axios from "axios";
 import io from "socket.io-client";
 
@@ -8,6 +9,8 @@ import Board from "./Board";
 import UserBanner from "./UserBanner";
 
 export default function Game() {
+  const gameId = useParams().id;
+
   const user = AuthStore.useState((s) => s.user);
   const socket = useRef();
 
@@ -16,12 +19,10 @@ export default function Game() {
 
   const [opponent, setOpponent] = useState();
 
-  // NOTE: check how to store gameId
-
   useEffect(() => {
     socket.current = io("localhost:3000");
 
-    socket.current.emit("join", { gameId: 1234, userId: user.id }, ({ message }) => {
+    socket.current.emit("join", { gameId, userId: user.id }, ({ message }) => {
       console.log(message);
     });
 
@@ -39,8 +40,11 @@ export default function Game() {
     });
 
     socket.current.on("opponent-disconnected", () => {
-      // TODO: opponent reconnected
       console.log("[x] opponent disconnected");
+    });
+
+    socket.current.on("opponent-reconnected", () => {
+      console.log("[x] opponent reconnected");
     });
 
     socket.current.on("board", ({ board }) => {
@@ -49,7 +53,7 @@ export default function Game() {
   }, []);
 
   function sendMove(move) {
-    socket.current.emit("move", { move, gameId: 1234, userId: user.id });
+    socket.current.emit("move", { move, gameId, userId: user.id });
   }
 
   return (

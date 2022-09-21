@@ -1,13 +1,11 @@
 import { Chess } from "chess.js";
-import { v4 as uuid } from "uuid";
+import { nanoid } from "nanoid";
 
 export default class Game {
-  constructor({ io, firstPlayer }) {
-    this.io = io;
-    // this.id = uuid();
-    this.id = 1234;
+  constructor() {
+    this.id = nanoid(10);
     this.chessInstance = new Chess();
-    this.players = [firstPlayer];
+    this.players = [];
   }
 
   addPlayer(player) {
@@ -21,9 +19,14 @@ export default class Game {
       }
     }
 
+    console.log(`[x] player ${player.userId} joined game ${this.id}`);
+
     this.players.push(player);
     player.socket.join(this.id);
-    this.start();
+
+    if (this.players.length == 2) {
+      this.start();
+    }
 
     return true;
   }
@@ -48,6 +51,7 @@ export default class Game {
     player.socket = socket;
 
     player.socket.join(this.id);
+    player.socket.to(this.id).emit("opponent-reconnected");
     player.socket.emit("player-data", {
       color: player.color,
       opponentId: this.getOtherPlayer(player).userId,
@@ -70,7 +74,8 @@ export default class Game {
   }
 
   sendBoard() {
-    this.io.to(this.id).emit("board", { board: this.chessInstance.board() });
+    const board = this.chessInstance.board();
+    this.players.forEach((p) => p.socket.emit("board", { board }));
   }
 
   getPlayer(id) {

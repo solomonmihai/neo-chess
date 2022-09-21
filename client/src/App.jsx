@@ -73,7 +73,7 @@ export default function App() {
               </PrivateRoute>
             }
           />
-          <Route path="/game" element={<Game />} />
+          <Route path="/game/:id" element={<Game />} />
         </Route>
       </Routes>
     </BrowserRouter>
