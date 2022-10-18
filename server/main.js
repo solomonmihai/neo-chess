@@ -9,7 +9,7 @@ import cors from "cors";
 
 import AuthRouter from "./routers/auth.js";
 import UserRouter from "./routers/user.js";
-import GameRouter from "./routers/game.js";
+import GamesRouter from "./routers/game.js";
 
 import controller from "./sockets/controller.js";
 
@@ -17,7 +17,7 @@ const app = express();
 const server = createServer(app);
 
 // socket.io controller
-controller(server);
+const io = controller(server);
 
 const urlEncodedParser = bodyParser.urlencoded({ extended: false });
 app.use(bodyParser.json(), urlEncodedParser);
@@ -25,7 +25,7 @@ app.use(bodyParser.json(), urlEncodedParser);
 app.use(cors());
 
 app.use("/auth", AuthRouter);
-app.use("/game", GameRouter);
+app.use("/games", GamesRouter);
 app.use("/user", UserRouter);
 
 const dbURI = process.env.DB_URL;

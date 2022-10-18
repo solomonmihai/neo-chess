@@ -2,17 +2,18 @@ import { Flex } from "@chakra-ui/react";
 import { useRef, useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
-import io from "socket.io-client";
 
 import AuthStore from "../../stores/AuthStore";
 import Board from "./Board";
 import UserBanner from "./UserBanner";
+import GameStore from "../../stores/GameStore";
 
 export default function Game() {
   const gameId = useParams().id;
 
   const user = AuthStore.useState((s) => s.user);
-  const socket = useRef();
+
+  const socket = GameStore.useState((s) => s.socket);
 
   const [board, setBoard] = useState();
   const [color, setColor] = useState();
@@ -20,13 +21,12 @@ export default function Game() {
   const [opponent, setOpponent] = useState();
 
   useEffect(() => {
-    socket.current = io("localhost:3000");
-
-    socket.current.emit("join", { gameId, userId: user.id }, ({ message }) => {
+    socket.emit("join", { gameId, userId: user.id }, ({ message }) => {
       console.log(message);
+      // TODO: show something if game non existent
     });
 
-    socket.current.on("player-data", ({ color, opponentId }) => {
+    socket.on("player-data", ({ color, opponentId }) => {
       setColor(color);
 
       axios
@@ -39,21 +39,26 @@ export default function Game() {
         });
     });
 
-    socket.current.on("opponent-disconnected", () => {
+    socket.on("opponent-disconnected", () => {
       console.log("[x] opponent disconnected");
     });
 
-    socket.current.on("opponent-reconnected", () => {
+    socket.on("opponent-reconnected", () => {
       console.log("[x] opponent reconnected");
     });
 
-    socket.current.on("board", ({ board }) => {
+    socket.on("board", ({ board }) => {
       setBoard(board);
+    });
+
+    socket.on("end", ({ message }) => {
+      console.log(message);
+      // TODO: display feedback
     });
   }, []);
 
   function sendMove(move) {
-    socket.current.emit("move", { move, gameId, userId: user.id });
+    socket.emit("move", { move, gameId, userId: user.id });
   }
 
   return (

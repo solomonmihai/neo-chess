@@ -1,20 +1,21 @@
 import { Router } from "express";
 
 import verifyToken from "../middleware/auth.js";
-import Game from "../sockets/gameManager.js";
-import { games } from "../game/games.js";
+import { createGame, getAllGames } from "../game/games.js";
 
-const GameRouter = Router();
+const GamesRouter = Router();
 
-GameRouter.get("/new", verifyToken, (req, res) => {
-  const game = new Game();
-
-  const { id } = game;
-  games[id] = game;
-
+GamesRouter.get("/new", verifyToken, (req, res) => {
+  const id = createGame();
   return res.send({ id });
 });
 
-GameRouter.get("/live", (req, res) => {});
+GamesRouter.get("/open", async (req, res) => {
+  const openGames = Object.values(getAllGames())
+    .filter((game) => !game.started && game.players.length == 1)
+    .map((game) => ({ id: game.id, userId: game.players[0].userId, color: game.players[0].color == "w" ? "w" : "b" }));
 
-export default GameRouter;
+  return res.send({ games: openGames });
+});
+
+export default GamesRouter;

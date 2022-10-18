@@ -1,7 +1,7 @@
 import { Server } from "socket.io";
 import Player from "./player.js";
 
-import { games, userIsInGame, socketIsInGame } from "../game/games.js";
+import { getGame, userIsInGame, socketIsInGame } from "../game/games.js";
 
 function handlePlayerJoin({ socket, callback, userId, gameId }) {
   const { game } = userIsInGame(userId);
@@ -14,20 +14,22 @@ function handlePlayerJoin({ socket, callback, userId, gameId }) {
     return;
   }
 
-  if (!games[gameId]) {
+  if (!getGame(gameId)) {
     callback({ message: "game non existent" });
     return;
   }
 
   const player = new Player({ userId, socket });
 
-  if (!games[gameId].addPlayer(player)) {
+  if (getGame(gameId).addPlayer(player)) {
     callback({ message: "cannot join this game" });
   }
 }
 
+let io;
+
 export default function controller(server) {
-  const io = new Server(server, { cors: { origin: "*" } });
+  io = new Server(server, { cors: { origin: "*" } });
 
   io.on("connection", (socket) => {
     socket.on("join", ({ userId, gameId }, callback) => {
@@ -35,7 +37,8 @@ export default function controller(server) {
     });
 
     socket.on("move", ({ move, gameId, userId }) => {
-      games[gameId].makeMove({ move, userId });
+      // TODO: check if game id exists
+      getGame(gameId).makeMove({ move, userId });
     });
 
     socket.on("disconnect", () => {
@@ -47,4 +50,9 @@ export default function controller(server) {
   });
 
   return io;
+}
+
+export function emitListUpdate() {
+  // TODO
+  // io.emit("open-games-update");
 }

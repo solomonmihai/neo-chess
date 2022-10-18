@@ -16,6 +16,9 @@ export default function Login() {
 
   const user = AuthStore.useState((s) => s.user);
 
+  // TODO: if authenticated go to /home
+  // same for register
+
   useEffect(() => {
     if (user) {
       navigate("/home");
@@ -24,6 +27,7 @@ export default function Login() {
 
   async function login() {
     const err = await loginUser(data);
+    // TODO: fix offline server error
     if (err) {
       setErrors(err);
       return;

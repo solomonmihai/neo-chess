@@ -1,11 +1,17 @@
 import { Chess } from "chess.js";
-import { nanoid } from "nanoid";
+import { customAlphabet } from "nanoid";
+
+const nanoid = customAlphabet("abcdefghihjklmnopqrstuvxywz", 5);
 
 export default class Game {
   constructor() {
-    this.id = nanoid(10);
+    this.id = nanoid();
     this.chessInstance = new Chess();
     this.players = [];
+    this.started = false;
+
+    this.whiteId = null;
+    this.blackId = null;
   }
 
   addPlayer(player) {
@@ -23,6 +29,10 @@ export default class Game {
 
     this.players.push(player);
     player.socket.join(this.id);
+
+    if (this.players.length == 1) {
+      this.players[0].color = Math.random() < 0.5 ? "w" : "b";
+    }
 
     if (this.players.length == 2) {
       this.start();
@@ -42,6 +52,13 @@ export default class Game {
         player.disconnected = true;
       }
     }
+
+    const diconnected = this.players.reduce((p, sum) => (sum += p.diconnected ? 1 : 0));
+
+    if (diconnected == 2) {
+      // TODO: draw game
+      // delete game
+    }
   }
 
   reconnectPlayer({ userId, socket }) {
@@ -60,17 +77,26 @@ export default class Game {
   }
 
   start() {
-    const c1 = Math.random() < 0.5 ? "w" : "b";
-    const c2 = c1 == "w" ? "b" : "w";
+    this.players[1].color = this.players[0].color == "w" ? "b" : "w";
 
-    this.players[0].color = c1;
-    this.players[1].color = c2;
+    if (this.players[0].color == "w") {
+      this.whiteId = this.players[0].userId;
+      this.blackId = this.players[1].userId;
+    } else {
+      this.whiteId = this.players[1].userId;
+      this.blackId = this.players[0].userId;
+    }
 
     this.players.forEach((p) => {
-      p.socket.emit("player-data", { color: p.color, opponentId: this.getOtherPlayer(p).userId });
+      p.socket.emit("player-data", {
+        color: p.color,
+        opponentId: this.getOtherPlayer(p).userId,
+      });
     });
 
     this.sendBoard();
+
+    this.started = true;
   }
 
   sendBoard() {
@@ -83,10 +109,42 @@ export default class Game {
   }
 
   makeMove({ move, userId }) {
-    if (this.getPlayer(userId).color != this.chessInstance.turn()) {
+    const ci = this.chessInstance;
+
+    if (this.getPlayer(userId).color != ci.turn()) {
       return;
     }
-    this.chessInstance.move(move);
+    ci.move(move);
     this.sendBoard();
+
+    if (ci.isGameOver()) {
+      const message = { state: null };
+
+      if (ci.isCheckmate()) {
+        message.state = "checkmate";
+        message["winner"] = ci.turn() == "w" ? "b" : "w";
+      }
+
+      if (ci.isDraw()) {
+        message.state = "draw";
+      }
+
+      if (ci.isStalemate()) {
+        message.state = "stalemate";
+      }
+
+      if (ci.isThreefoldRepetition()) {
+        message.state = "repetition";
+      }
+
+      if (ci.isInsufficientMaterial()) {
+        message.state = "insufficient_material";
+      }
+
+      this.players.forEach((p) => p.socket.emit("end", { message }));
+
+      // TODO: remove game from list and save to db
+      // add headers
+    }
   }
 }

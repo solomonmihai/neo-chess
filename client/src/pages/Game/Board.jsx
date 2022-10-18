@@ -45,6 +45,7 @@ export default function Board({ board = EMPTY_BOARD, isBlack, sendMove }) {
     sendMove(move);
   }
 
+  // TODO: highlight if in check
   // TODO: make board resizable
   // TODO: show notations
   // TODO: fix last move highlight
