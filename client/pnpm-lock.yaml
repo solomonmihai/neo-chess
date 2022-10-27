@@ -9,6 +9,7 @@ specifiers:
   '@vitejs/plugin-react': ^2.0.1
   axios: ^0.27.2
   chess.js: 1.0.0-alpha.0
+  dayjs: ^1.11.5
   framer-motion: ^7.2.1
   pullstate: ^1.24.0
   react: ^18.2.0
@@ -24,6 +25,7 @@ dependencies:
   '@emotion/styled': 11.10.4_kjddpxqkh75n32dccdij3kv22i
   axios: 0.27.2
   chess.js: 1.0.0-alpha.0
+  dayjs: 1.11.5
   framer-motion: 7.2.1_biqbaboplfbrettd7655fr4n2y
   pullstate: 1.24.0_react@18.2.0
   react: 18.2.0
@@ -1728,6 +1730,10 @@ packages:
 
   /csstype/3.1.0:
     resolution: {integrity: sha512-uX1KG+x9h5hIJsaKR9xHUeUraxf8IODOwq9JLNPq6BwB04a/xgpq3rcx47l5BZu5zBPlgD342tdke3Hom/nJRA==}
+
+  /dayjs/1.11.5:
+    resolution: {integrity: sha512-CAdX5Q3YW3Gclyo5Vpqkgpj8fSdLQcRuzfX6mC6Phy0nfJ0eGYOeS7m4mt2plDWLAtA4TqTakvbboHvUxfe4iA==}
+    dev: false
 
   /debug/4.3.4:
     resolution: {integrity: sha512-PRWFHuSU3eDtQJPvnNY7Jcket1j0t5OuOsFzPPzsekD52Zl8qUfFIPEiswXqIvHWGVHOgX+7G/vCNNhehwxfkQ==}

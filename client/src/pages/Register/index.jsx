@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Box, Button, FormControl, Text } from "@chakra-ui/react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 import InputList from "../../components/InputList";
 import AuthStore from "../../stores/AuthStore";
-import { useEffect } from "react";
+import LinkText from "../../components/LinkText";
 
 export default function Register() {
   const [data, setData] = useState({
@@ -57,6 +57,7 @@ export default function Register() {
     },
     {
       name: "confirmPassword",
+      label: "confirm password",
       isPassword: true,
     },
   ];
@@ -82,17 +83,7 @@ export default function Register() {
         </Button>
 
         <Text textAlign="center" color="gray.400" mt="2">
-          already have an account?{" "}
-          <Link to="/login">
-            <Text
-              as="span"
-              color="purple.200"
-              textDecor="underline"
-              cursor="pointer"
-            >
-              login
-            </Text>
-          </Link>
+          already have an account? <LinkText to="/login" text="login" />
         </Text>
       </FormControl>
     </Box>

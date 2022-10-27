@@ -1,7 +1,21 @@
 import { Chess } from "chess.js";
 import { customAlphabet } from "nanoid";
+import { finishGame } from "../game/games.js";
+import { emitOpenGamesListUpdate } from "./controller.js";
 
 const nanoid = customAlphabet("abcdefghihjklmnopqrstuvxywz", 5);
+
+const DEBUG = true;
+
+const BOTH_DISCONNECT_TIMEOUT = 10 * 1000;
+const DISCONNECT_TIMEOUT = 10 * 1000;
+
+function log(...info) {
+  if (!DEBUG) {
+    return;
+  }
+  console.log("[x] game manager:", ...info);
+}
 
 export default class Game {
   constructor() {
@@ -12,6 +26,8 @@ export default class Game {
 
     this.whiteId = null;
     this.blackId = null;
+
+    this.createdAt = Date.now();
   }
 
   addPlayer(player) {
@@ -25,7 +41,7 @@ export default class Game {
       }
     }
 
-    console.log(`[x] player ${player.userId} joined game ${this.id}`);
+    log(`player ${player.userId} joined game ${this.id}`);
 
     this.players.push(player);
     player.socket.join(this.id);
@@ -45,35 +61,55 @@ export default class Game {
     return this.players.find((p) => p.userId != player.userId);
   }
 
+  getDisconnectedPlayers() {
+    return this.players.reduce((p, sum) => (sum += p.diconnected ? 1 : 0));
+  }
+
   disconnectPlayer(socketId) {
-    for (const player of this.players) {
-      if (player.socket.id == socketId) {
-        player.socket.to(this.id).emit("opponent-disconnected");
-        player.disconnected = true;
-      }
-    }
+    const player = this.players.find((p) => p.socket.id == socketId);
 
-    const diconnected = this.players.reduce((p, sum) => (sum += p.diconnected ? 1 : 0));
+    player.socket.to(this.id).emit("opponent-disconnected");
+    player.disconnected = true;
 
-    if (diconnected == 2) {
-      // TODO: draw game
-      // delete game
+    player.disconnectTimeoutId = setTimeout(() => {
+      // TODO: set the other player as winner
+      this.endGame();
+    }, DISCONNECT_TIMEOUT);
+
+    log(`player ${player.userId} disconnected from game ${this.id}`);
+
+    if (this.getDisconnectedPlayers() == this.players.length) {
+      this.bothDisconnectedTimeoutId = setTimeout(() => {
+        if (this.getDisconnectedPlayers() == this.players.length) {
+          this.endGame();
+        }
+      }, BOTH_DISCONNECT_TIMEOUT);
     }
   }
 
   reconnectPlayer({ userId, socket }) {
     const player = this.players.find((p) => p.userId == userId);
+    player.socket = socket;
+    player.socket.join(this.id);
 
     player.disconnected = false;
-    player.socket = socket;
+    clearTimeout(player.disconnectTimeoutId);
 
-    player.socket.join(this.id);
-    player.socket.to(this.id).emit("opponent-reconnected");
-    player.socket.emit("player-data", {
-      color: player.color,
-      opponentId: this.getOtherPlayer(player).userId,
-    });
-    player.socket.emit("board", { board: this.chessInstance.board() });
+    if (this.started) {
+      player.socket.to(this.id).emit("opponent-reconnected");
+      player.socket.emit("player-data", {
+        color: player.color,
+        opponentId: this.getOtherPlayer(player).userId,
+      });
+
+      player.socket.emit("board", { board: this.chessInstance.board() });
+    }
+
+    log(`player ${player.userId} reconnected to game ${this.id}`);
+
+    if (this.getDisconnectedPlayers() == 0) {
+      clearTimeout(this.bothDisconnectedTimeoutId);
+    }
   }
 
   start() {
@@ -97,6 +133,8 @@ export default class Game {
     this.sendBoard();
 
     this.started = true;
+
+    emitOpenGamesListUpdate();
   }
 
   sendBoard() {
@@ -106,6 +144,12 @@ export default class Game {
 
   getPlayer(id) {
     return this.players.find((p) => p.userId == id);
+  }
+
+  addHeaders() {
+    this.chessInstance.header("white", this.whiteId);
+    this.chessInstance.header("black", this.blackId);
+    this.chessInstance.header("date", Date.now());
   }
 
   makeMove({ move, userId }) {
@@ -142,9 +186,10 @@ export default class Game {
       }
 
       this.players.forEach((p) => p.socket.emit("end", { message }));
-
-      // TODO: remove game from list and save to db
-      // add headers
     }
+  }
+
+  endGame() {
+    finishGame(this.id);
   }
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Box, Button, FormControl, Text } from "@chakra-ui/react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import LinkText from "../../components/LinkText";
 
 import InputList from "../../components/InputList";
 import { loginUser } from "../../util/auth";
@@ -15,9 +16,6 @@ export default function Login() {
   const navigate = useNavigate();
 
   const user = AuthStore.useState((s) => s.user);
-
-  // TODO: if authenticated go to /home
-  // same for register
 
   useEffect(() => {
     if (user) {
@@ -68,17 +66,7 @@ export default function Login() {
         </Button>
 
         <Text textAlign="center" color="gray.400" mt="2">
-          don't have an account?{" "}
-          <Link to="/register">
-            <Text
-              as="span"
-              color="purple.200"
-              textDecor="underline"
-              cursor="pointer"
-            >
-              register
-            </Text>
-          </Link>
+          don't have an account? <LinkText to="/register" text="register" />
         </Text>
       </FormControl>
     </Box>

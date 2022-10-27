@@ -15,7 +15,7 @@ function handlePlayerJoin({ socket, callback, userId, gameId }) {
   }
 
   if (!getGame(gameId)) {
-    callback({ message: "game non existent" });
+    callback({ message: "no-game" });
     return;
   }
 
@@ -38,7 +38,12 @@ export default function controller(server) {
 
     socket.on("move", ({ move, gameId, userId }) => {
       // TODO: check if game id exists
-      getGame(gameId).makeMove({ move, userId });
+      const game = getGame(gameId);
+      if (!game) {
+        socket.emit(`game ${gameId} does not exist`);
+        return;
+      }
+      game.makeMove({ move, userId });
     });
 
     socket.on("disconnect", () => {
@@ -52,7 +57,9 @@ export default function controller(server) {
   return io;
 }
 
-export function emitListUpdate() {
-  // TODO
-  // io.emit("open-games-update");
+export function emitOpenGamesListUpdate() {
+  // TODO: find a way to remove the timeout
+  setTimeout(() => {
+    io.emit("open-games-update");
+  }, 1000);
 }

@@ -2,7 +2,10 @@ import { Container, Box, Button, Text, VStack, Grid, GridItem } from "@chakra-ui
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import io from "socket.io-client";
+import dayjs from "dayjs";
+import RelativeTime from "dayjs/plugin/relativeTime";
+
+dayjs.extend(RelativeTime);
 
 import AuthStore from "../../stores/AuthStore";
 import GameStore from "../../stores/GameStore";
@@ -14,7 +17,7 @@ async function fetchOpenGames() {
   for (const game of res.data.games) {
     const userRes = await axios.get(`/user/${game.userId}`);
     const username = userRes.data.user.username;
-    games.push({ id: game.id, username });
+    games.push({ username, ...game });
   }
 
   return games;
@@ -30,9 +33,6 @@ export default function Home() {
 
   useEffect(() => {
     if (!socket) {
-      GameStore.update((s) => {
-        s.socket = io("localhost:3000");
-      });
       return;
     }
 
@@ -72,37 +72,36 @@ export default function Home() {
       });
   }
 
-  // TODO: alternate grid list item colors
-
   return (
     <Container>
       <Text>logged in as {user.username}</Text>
-      <Button onClick={createGame}>create game</Button>
-      <VStack borderWidth={2} borderColor="purple.200" p="3" borderRadius="lg" width="400px">
+      <Button my="2" onClick={createGame}>create game</Button>
+      <VStack borderWidth={2} borderColor="purple.200" p="3" borderRadius="lg" maxWidth="600px" my="2">
         <Text fontWeight="bold" textAlign="center">
-          games
+          open games
         </Text>
         {openGames.length == 0 && <Text textAlign="center">no open games at the moment</Text>}
 
-        {openGames.map((game, index) => (
+        {openGames.map(({ id, username, createdAt, color }, index) => (
           <Grid
-            key={game.id}
+            key={id}
             onClick={() => {
-              navigate(`/game/${game.id}`);
+              navigate(`/game/${id}`);
             }}
-            templateColumns="10% 45% 45%"
+            templateColumns="30% 30% 10% 30%"
             padding="10px"
             width="full"
             borderRadius="lg"
-            backgroundColor="gray.700"
+            backgroundColor={index % 2 == 0 && "gray.700"}
             _hover={{
               backgroundColor: "purple.800",
               cursor: "pointer",
             }}
           >
-            <GridItem>{index + 1}.</GridItem>
-            <GridItem>{game.username}</GridItem>
-            <GridItem>{game.id}</GridItem>
+            <GridItem>{username}</GridItem>
+            <GridItem>{id}</GridItem>
+            <GridItem>{color}</GridItem>
+            <GridItem>{dayjs(createdAt).fromNow()}</GridItem>
           </Grid>
         ))}
       </VStack>

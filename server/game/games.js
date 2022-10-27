@@ -1,4 +1,4 @@
-import { emitListUpdate } from "../sockets/controller.js";
+import { emitOpenGamesListUpdate } from "../sockets/controller.js";
 import Game from "../sockets/gameManager.js";
 
 const games = {};
@@ -46,12 +46,13 @@ export function createGame() {
   const { id } = game;
   games[id] = game;
 
-  emitListUpdate();
+  emitOpenGamesListUpdate();
 
   return id;
 }
 
 export function finishGame(id) {
   delete games[id];
-  emitListUpdate();
+  // TODO: if game wasn't started, don't save it to db
+  emitOpenGamesListUpdate();
 }

@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
+import io from "socket.io-client";
 
 import PrivateRoute from "./components/PrivateRoute";
 import Nav from "./components/Nav";
@@ -13,9 +14,15 @@ import Register from "./pages/Register";
 import AuthStore from "./stores/AuthStore";
 import { checkToken } from "./util/auth";
 import { Box, Text } from "@chakra-ui/react";
+import GameStore from "./stores/GameStore";
 
 export default function App() {
   const [loading, setLoading] = useState(true);
+
+  const user = AuthStore.useState((s) => s.user);
+  const socket = GameStore.useState((s) => s.socket);
+
+  // TODO: check bug when if newly created player creates game it crashes
 
   useEffect(() => {
     AuthStore.subscribe(
@@ -37,6 +44,14 @@ export default function App() {
       setLoading(false);
     });
   }, []);
+
+  useEffect(() => {
+    if (user && !socket) {
+      GameStore.update((s) => {
+        s.socket = io("localhost:3000");
+      });
+    }
+  }, [user]);
 
   // TODO: refactor this
   if (loading) {
