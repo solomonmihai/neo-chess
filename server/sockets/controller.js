@@ -36,16 +36,6 @@ export default function controller(server) {
       handlePlayerJoin({ socket, callback, userId, gameId });
     });
 
-    socket.on("move", ({ move, gameId, userId }) => {
-      // TODO: check if game id exists
-      const game = getGame(gameId);
-      if (!game) {
-        socket.emit(`game ${gameId} does not exist`);
-        return;
-      }
-      game.makeMove({ move, userId });
-    });
-
     socket.on("disconnect", () => {
       const { game, player } = socketIsInGame(socket.id);
       if (game) {

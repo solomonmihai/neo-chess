@@ -27,7 +27,48 @@ export default class Game {
     this.whiteId = null;
     this.blackId = null;
 
+    this.drawProposal = false;
+
     this.createdAt = Date.now();
+  }
+
+  emitBoth(event, message) {
+    this.players.forEach((p) => p.socket.emit(event, message));
+  }
+
+  setupPlayerSocket(player) {
+    player.socket.join(this.id);
+
+    // do I want to have a player be able to play multiple games at the same time? no
+    player.socket.on("move", ({ move }) => {
+      // TODO: check if game id exists
+      this.makeMove({ move, player });
+    });
+
+    player.socket.on("propose-draw", () => {
+      this.drawProposal = true;
+      player.socket.to(this.id).emit("draw-proposal");
+    });
+
+    player.socket.on("accept-draw", () => {
+      this.drawProposal = false;
+
+      const message = { state: "draw" };
+      this.emitBoth("end", { message });
+    });
+
+    player.socket.on("decline-draw", () => {
+      this.drawProposal = false;
+      this.emitBoth("draw-declined");
+    });
+
+    player.socket.on("resign", () => {
+      const message = {
+        state: "resign",
+        winner: this.getOtherPlayer(player).color,
+      };
+      this.emitBoth("end", { message });
+    });
   }
 
   addPlayer(player) {
@@ -44,7 +85,8 @@ export default class Game {
     log(`player ${player.userId} joined game ${this.id}`);
 
     this.players.push(player);
-    player.socket.join(this.id);
+
+    this.setupPlayerSocket(player);
 
     if (this.players.length == 1) {
       this.players[0].color = Math.random() < 0.5 ? "w" : "b";
@@ -69,6 +111,9 @@ export default class Game {
     const player = this.players.find((p) => p.socket.id == socketId);
 
     player.socket.to(this.id).emit("opponent-disconnected");
+
+    player.socket.leave(this.id);
+
     player.disconnected = true;
 
     player.disconnectTimeoutId = setTimeout(() => {
@@ -90,7 +135,7 @@ export default class Game {
   reconnectPlayer({ userId, socket }) {
     const player = this.players.find((p) => p.userId == userId);
     player.socket = socket;
-    player.socket.join(this.id);
+    this.setupPlayerSocket(player);
 
     player.disconnected = false;
     clearTimeout(player.disconnectTimeoutId);
@@ -139,7 +184,7 @@ export default class Game {
 
   sendBoard() {
     const board = this.chessInstance.board();
-    this.players.forEach((p) => p.socket.emit("board", { board }));
+    this.emitBoth("board", { board });
   }
 
   getPlayer(id) {
@@ -152,10 +197,10 @@ export default class Game {
     this.chessInstance.header("date", Date.now());
   }
 
-  makeMove({ move, userId }) {
+  makeMove({ move, player }) {
     const ci = this.chessInstance;
 
-    if (this.getPlayer(userId).color != ci.turn()) {
+    if (player.color != ci.turn()) {
       return;
     }
     ci.move(move);
@@ -185,11 +230,13 @@ export default class Game {
         message.state = "insufficient_material";
       }
 
-      this.players.forEach((p) => p.socket.emit("end", { message }));
+      this.emitBoth("end", { message });
     }
   }
 
   endGame() {
+    // TODO: don't allow players to move anymore
+
     finishGame(this.id);
   }
 }

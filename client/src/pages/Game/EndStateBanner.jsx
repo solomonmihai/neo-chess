@@ -1,9 +1,9 @@
-import { Box, Text } from "@chakra-ui/react";
+import { Box, Text, HStack } from "@chakra-ui/react";
 import LinkText from "../../components/LinkText";
 
 function parseMessage(message, color) {
-  if (message.state == "checkmate") {
-    if (message.color == color) {
+  if (message.state == "checkmate" || message.state == "resign") {
+    if (message.winner == color) {
       return "you won!";
     }
     return "you lost!";
@@ -15,25 +15,29 @@ function parseMessage(message, color) {
 }
 
 // TODO
+// NOTE: place this in the middle of the board
 export default function EndStateBanner({ message, color, user, opponent }) {
   const title = parseMessage(message, color);
 
   return (
     <Box
+      p="4"
       position="absolute"
-      top="0"
-      left="0"
-      width="100vw"
-      height="100vh"
-      backgroundColor="rgba(0, 0, 0, 0.3)"
+      top="50%"
+      left="50%"
+      transform="translate(-50%, -50%)"
+      borderRadius="lg"
+      backgroundColor="gray.800"
       display="flex"
-      justifyContent="center"
-      alignItems="center"
+      flexDir="column"
+      textAlign="center"
     >
-      <Box p="4" borderRadius="lg" backgroundColor="gray.800" display="flex" flexDir="column" textAlign="center">
-        <Text>{title}</Text>
-        <LinkText to="/home" text="go back" />
-      </Box>
+      <Text>{title}</Text>
+      <HStack fontWeight="bold" textAlign="center">
+        <Text>{user.username}</Text>
+        <Text>{opponent.username}</Text>
+      </HStack>
+      <LinkText to="/home" text="go back" />
     </Box>
   );
 }

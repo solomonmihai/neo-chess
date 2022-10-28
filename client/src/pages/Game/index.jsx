@@ -1,11 +1,10 @@
-import { Flex, Box, Text } from "@chakra-ui/react";
+import { Flex, Box, Text, Button, Spacer } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 
 import AuthStore from "../../stores/AuthStore";
 import Board from "./Board";
-import UserBanner from "./UserBanner";
 import GameStore from "../../stores/GameStore";
 import LinkText from "../../components/LinkText";
 import EndStateBanner from "./EndStateBanner";
@@ -21,10 +20,10 @@ export default function Game() {
   const [color, setColor] = useState();
 
   const [opponent, setOpponent] = useState();
-
   const [noGame, setNoGame] = useState(false);
-
   const [endMessage, setEndMessage] = useState(null);
+  const [proposingDraw, setProposingDraw] = useState(false);
+  const [drawProposal, setDrawProposal] = useState(false);
 
   useEffect(() => {
     if (!socket) {
@@ -61,14 +60,41 @@ export default function Game() {
       setBoard(board);
     });
 
+    socket.on("draw-proposal", () => {
+      setDrawProposal(true);
+    });
+
+    socket.on("draw-declined", () => {
+      setDrawProposal(false);
+      setProposingDraw(false);
+    });
+
     socket.on("end", ({ message }) => {
       console.log(message);
+      setDrawProposal(false);
       setEndMessage(message);
     });
   }, [socket]);
 
   function sendMove(move) {
-    socket.emit("move", { move, gameId, userId: user.id });
+    socket.emit("move", { move });
+  }
+
+  function resign() {
+    socket.emit("resign");
+  }
+
+  function proposeDraw() {
+    setProposingDraw(true);
+    socket.emit("propose-draw");
+  }
+
+  function acceptDraw() {
+    socket.emit("accept-draw");
+  }
+
+  function declineDraw() {
+    socket.emit("decline-draw");
   }
 
   if (noGame) {
@@ -83,11 +109,45 @@ export default function Game() {
   }
 
   return (
-    <Flex direction="column" alignItems="center" justifyContent="center">
-      {opponent && <UserBanner user={opponent} />}
-      <Board board={board} isBlack={color == "b"} sendMove={sendMove} />
-      <UserBanner user={user} />
-      {endMessage && <EndStateBanner message={endMessage} color={color} />}
+    <Flex alignItems="center" justifyContent="center">
+      <Flex direction="column">
+        {opponent && (
+          <Flex dir="row" width="full" alignItems="center" my="2">
+            <Text fontWeight="bold">{opponent.username}</Text>
+            <Spacer />
+            {drawProposal && (
+              <>
+                <Text fontWeight="bold" mr="2">
+                  proposed a draw
+                </Text>
+                <Button variant="ghost" colorScheme="red" onClick={declineDraw}>
+                  decline
+                </Button>
+                <Button variant="ghost" onClick={acceptDraw}>
+                  accept
+                </Button>
+              </>
+            )}
+          </Flex>
+        )}
+        <Board board={board} isBlack={color == "b"} sendMove={sendMove} />
+        <Flex dir="row" width="full" alignItems="center" my="2">
+          <Text fontWeight="bold">{user.username}</Text>
+          <Spacer />
+          {proposingDraw && <Text fontWeight="bold">draw offer sent</Text>}
+          {opponent && !endMessage && !proposingDraw && !drawProposal && (
+            <>
+              <Button variant="ghost" onClick={proposeDraw}>
+                draw
+              </Button>
+              <Button variant="ghost" colorScheme="red" onClick={resign}>
+                resign
+              </Button>
+            </>
+          )}
+        </Flex>
+        {endMessage && <EndStateBanner message={endMessage} color={color} user={user} opponent={opponent} />}
+      </Flex>
     </Flex>
   );
 }
